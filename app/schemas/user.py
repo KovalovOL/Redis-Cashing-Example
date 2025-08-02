@@ -11,14 +11,16 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(min_length=6)
+
 
 class UserLogin(BaseModel):
     username: str = Field(max_length=50)
-    password: str
+    password: str = Field(min_length=6)
+
 
 class User(UserBase):
-    id: int = Field(..., ge=0)
+    id: int = Field(ge=0)
 
 
 class UserFilter(BaseModel):

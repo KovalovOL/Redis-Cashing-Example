@@ -6,8 +6,8 @@ from jose import jwt, JWTError
 from app.db.database import Sessionmaker
 from app.core.security import SECRET_KEY, ALGORITHM
 from app.schemas.jwt_token import Token
-from app.schemas.user import UserFilter, User
-from app.crud.user import get_users_by_conditions
+from app.schemas.user import User
+from app.crud.user import get_user_by_username
 
 
 def get_db():
@@ -20,19 +20,27 @@ def get_db():
 
 def get_current_user(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
-
     if not token:
-        raise HTTPException(status_code=401, detail="Access token not found")
+        raise HTTPException(
+            status_code=401,
+            detail="Access token not found"
+        )
     
     try:
-        paylaod = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        token = Token(**paylaod)
-    except(JWTError, ValueError):
-        raise HTTPException(status_code=401, detail="Invalid tokne")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        token = Token(**payload)
+    except (JWTError, ValueError):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid access token"
+        )
     
-    user = get_users_by_conditions(db, UserFilter(username=token.sub))
+    user = get_user_by_username(db, token.sub)
     if not user:
-        raise HTTPException(status_code=401, detail=f"User {token.sub} not found")
-    user = user[0]
+        raise HTTPException(
+            status_code=404,
+            detail=f"User f{token.sub} not found"
+        )
+    
+    return User.from_orm(user)
 
-    return user

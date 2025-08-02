@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 
 
+
 class CommunityBase(BaseModel):
     community_name: str = Field(max_length=50)
     description: str = Field(max_length=500)
@@ -10,13 +11,16 @@ class CommunityBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CommunityCreateInput(CommunityBase):
+    pass
+
+
 class CommunityCreate(CommunityBase):
     owner_id: int = Field(ge=0)
 
 
-class Community(CommunityBase):
+class Community(CommunityCreate):
     id: int
-    owner_id: int = Field(ge=0)
 
 
 class CommunityFilter(BaseModel):

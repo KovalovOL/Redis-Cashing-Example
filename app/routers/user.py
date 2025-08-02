@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, Path, Query, HTTPException
+from fastapi import APIRouter, Depends, Path
 from sqlalchemy.orm import Session
-from typing import List, Literal, Optional
+from typing import List
 
+from app.services import user_service
 from app.core.dependencies import get_db, get_current_user
-from app.crud import user as user_crud
 from app.schemas.user import *
 
 
@@ -11,56 +11,48 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[User])
-async def get_user(
-    id: int = Query(None, ge=0),
-    username: str = Query(None, max_length=50),
-    role: Optional[Literal["user", "admin"]] = None,
+async def get_all_users_handler(db: Session = Depends(get_db)) -> List[User]:
+    return user_service.get_all_users(db)
+
+
+@router.get("/me", response_model=User)
+async def get_logged_in_user_handler(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    return current_user
+
+
+@router.get("/{username}", response_model=User)
+async def get_user_by_username_handler(
+    username: str = Path(..., max_length=50),
     db: Session = Depends(get_db)
-) -> List[User]:
-    
-    if role or id or username:
-        filter = UserFilter(id=id, username=username, role=role)
-        return user_crud.get_users_by_conditions(db, filter)
-    
-    return user_crud.get_all_users(db)
+) -> User:
+    return user_service.get_user_by_username(db, username)
 
 
 @router.post("/", response_model=User)
-async def create_user(
+async def create_user_handler(
     user: UserCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> User:
-    
-    if user.role == "admin" and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail=f"You are not allowed to create an admin user")
-
-    return user_crud.create_user(db, user)
+    return user_service.create_user(db, user, current_user)
 
 
 @router.put("/{user_id}", response_model=User)
-async def update_user(
+async def update_user_handler(
     updates: UserUpdate,
     user_id: int = Path(..., ge=0),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> User:
-    
-    if user_id != current_user.id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="You have not permission to edit other users")
-
-    return user_crud.update_user(db, user_id, updates)
+    return user_service.update_user(db, user_id, updates, current_user)
 
 
-@router.delete("/{user_id}")
-async def delete_user(
+@router.delete("/{user_id}", response_model=dict)
+async def delete_user_handler(
     user_id: int = Path(..., ge=0),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    
-    if user_id != current_user.id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail=f"You have not permission to delete other users")
-    
-    return user_crud.delete_user(db, user_id)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> dict:
+    return user_service.delete_user(db, user_id, current_user)
