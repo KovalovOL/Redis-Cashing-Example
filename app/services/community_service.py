@@ -6,6 +6,8 @@ from app.crud import community as community_crud
 from app.db.models import Community as CommunityDB
 from app.schemas.community import *
 from app.schemas.user import User
+from app.cache.utils import *
+from app.cache.keys import *
 
 
 def get_all_communities(db: Session) -> List[Community]:
@@ -17,9 +19,17 @@ def get_community_by_id(
     db: Session,
     community_id: int
 ) -> Community:
+    cache_key = community_cache_key(community_id)
+    cached_community = get_cache(cache_key)
+    if cached_community:
+        print("Data from cache")
+        return deserialize_community(cached_community)
+
     community = community_crud.get_community_by_id(db, community_id)
     if not community:
         raise HTTPException(status_code=404, detail="Community not found")
+    
+    set_cache(cache_key, serialize_community(community), ttl=120)
     return Community.from_orm(community)
 
 
@@ -60,6 +70,7 @@ def update_community(
             detail="Community not found"
         )
     
+
     if community.owner_id != current_user.id and current_user.role != "admin":
         raise HTTPException(
             status_code=403,
@@ -75,7 +86,7 @@ def update_community(
     if updates.community_name is not None:
         if community_crud.is_community_exist_by_name(db, updates.community_name):
             raise HTTPException(
-                status_code=403, detail=f"Community {updates.community_name} has already existed"
+                status_code=409, detail=f"Community {updates.community_name} has already existed"
             )
         community.community_name = updates.community_name
     
@@ -86,6 +97,7 @@ def update_community(
         community.photo_url = updates.photo_url
 
     community_crud.update_community(db, community)
+    set_cache(community_cache_key(community_id), serialize_community(community), ttl=120)
     return Community.from_orm(community)
 
 
@@ -108,4 +120,5 @@ def delete_community(
         )
     
     community_crud.delete_community(db, community)
+    delete_cache(community_cache_key(community_id))
     return {"message": f"Community {community.community_name} has been deleted"} 
