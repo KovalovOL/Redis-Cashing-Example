@@ -8,10 +8,17 @@ from app.schemas.community import *
 from app.schemas.user import User
 from app.cache.utils import *
 from app.cache.keys import *
+from app.core.logging_config import logger
+from app.core.log_context import set_user_context
+
 
 
 def get_all_communities(db: Session) -> List[Community]:
     communities = community_crud.get_all_communities(db)
+    logger.info(
+        "communities_fetched_from_db",
+        total_count=len(communities)
+    )
     return [Community.from_orm(community) for community in communities]
 
 
@@ -22,14 +29,25 @@ def get_community_by_id(
     cache_key = community_cache_key(community_id)
     cached_community = get_cache(cache_key)
     if cached_community:
-        print("Data from cache")
+        logger.info("fetched_community_from_cache", community_id=community_id)
         return deserialize_community(cached_community)
 
     community = community_crud.get_community_by_id(db, community_id)
     if not community:
-        raise HTTPException(status_code=404, detail="Community not found")
-    
+        logger.warning(
+            "community_fetch_failed",
+            community_id=community_id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Community not found"
+        )
+    logger.info("community_fetched_from_db", community_id=community_id)
+
     set_cache(cache_key, serialize_community(community), ttl=120)
+    logger.debug("community_cached", community_id=community_id)
+
     return Community.from_orm(community)
 
 
@@ -38,8 +56,14 @@ def create_community(
     community: CommunityCreateInput,
     current_user: User
 ) -> Community:
-    
+    set_user_context(current_user)
+
     if community_crud.is_community_exist_by_name(db, community.community_name):
+        logger.warning(
+            "community_create_failed",
+            community_name=community.community_name,
+            reason="already_exist"
+        )
         raise HTTPException(
             status_code=409,
             detail=f"Community {community.community_name} has already existed"
@@ -53,6 +77,8 @@ def create_community(
     )
 
     community_crud.create_community(db, new_community)
+    logger.info("community_created", community_id=new_community.id)
+
     return Community.from_orm(new_community)
 
 
@@ -62,9 +88,15 @@ def update_community(
     updates: CommunityUpdate,
     current_user: User
 ) -> Community:
-    
+    set_user_context(current_user)
+
     community = community_crud.get_community_by_id(db, community_id)
     if not community:
+        logger.warning(
+            "community_update_failed",
+            community_id=community_id,
+            reason="not_found"
+        )
         raise HTTPException(
             status_code=404,
             detail="Community not found"
@@ -72,12 +104,22 @@ def update_community(
     
 
     if community.owner_id != current_user.id and current_user.role != "admin":
+        logger.warning(
+            "community_update_failed",
+            community_id=community_id,
+            reason="permission_denied"
+        )
         raise HTTPException(
             status_code=403,
             detail="You do not have permission to edit other communities"
         )
 
     if not updates.model_dump(exclude_unset=True):
+        logger.warning(
+            "community_update_failed",
+            community_id=community_id,
+            reason="data_missed"
+        )
         raise HTTPException(
             status_code=400,
             detail="No update fields provided"
@@ -85,6 +127,11 @@ def update_community(
 
     if updates.community_name is not None:
         if community_crud.is_community_exist_by_name(db, updates.community_name):
+            logger.warning(
+                "community_update_failed",
+                community_name=updates.community_name,
+                reason="already_exists"
+            )
             raise HTTPException(
                 status_code=409, detail=f"Community {updates.community_name} has already existed"
             )
@@ -97,7 +144,11 @@ def update_community(
         community.photo_url = updates.photo_url
 
     community_crud.update_community(db, community)
+    logger.info("community_updated", community_id=community_id)
+
     set_cache(community_cache_key(community_id), serialize_community(community), ttl=120)
+    logger.debug("community_cached", community_id=community_id)
+
     return Community.from_orm(community)
 
 
@@ -106,19 +157,36 @@ def delete_community(
     community_id: int,
     current_user: User
 ) -> dict:
+    set_user_context(current_user)
+
     community = community_crud.get_community_by_id(db, community_id)
     if not community:
+        logger.warning(
+            "community_delete_failed",
+            community_id=community_id,
+            reason="not_foundt"
+        )
         raise HTTPException(
             status_code=404,
             detail="Community not found"
         )
     
     if community.owner_id != current_user.id and current_user.role != "admin":
+        logger.warning(
+            "community_delete_failed",
+            community_id=community_id,
+            reason="permission_denied"
+        )
         raise HTTPException(
             status_code=403,
             detail="You do not have permission to delete other communities"
         )
     
     community_crud.delete_community(db, community)
-    delete_cache(community_cache_key(community_id))
+    logger.info("community_deleted", community_id=community_id)
+
+    if get_cache(community_cache_key(community_id)):
+        delete_cache(community_cache_key(community_id))
+        logger.debug("community_cache_deleted", community_id=community_id)
+
     return {"message": f"Community {community.community_name} has been deleted"} 

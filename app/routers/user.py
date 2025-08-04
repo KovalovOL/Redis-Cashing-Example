@@ -11,7 +11,9 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[User])
-async def get_all_users_handler(db: Session = Depends(get_db)) -> List[User]:
+async def get_all_users_handler(
+    db: Session = Depends(get_db)
+) -> List[User]:
     return user_service.get_all_users(db)
 
 

@@ -11,9 +11,10 @@ from app.services import community_service
 router = APIRouter()
 
 
-
 @router.get("/", response_model=List[Community])
-async def get_all_communities_handler(db: Session = Depends(get_db)) -> List[Community]:
+async def get_all_communities_handler(
+    db: Session = Depends(get_db)
+) -> List[Community]:
     return community_service.get_all_communities(db)
 
 
@@ -31,6 +32,7 @@ async def create_community(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> Community:
+    
     return community_service.create_community(db, community, current_user)
 
 
