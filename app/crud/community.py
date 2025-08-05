@@ -9,8 +9,12 @@ from app.schemas.community import CommunityCreate, CommunityFilter, CommunityUpd
 
 
 
-def get_all_communities(db: Session) -> List[CommunityDB]:
-    return db.query(CommunityDB).all()
+def get_all_communities(
+        db: Session,
+        limit: int,
+        offset: int
+) -> List[CommunityDB]:
+    return db.query(CommunityDB).offset(offset).limit(limit).all()
 
 
 def get_community_by_id(db: Session, community_id: int) -> CommunityDB:
@@ -63,6 +67,22 @@ def add_follower(
     db.commit()
     return community
 
+
+
+def get_all_followers(
+    db: Session,
+    limit: int,
+    offset: int,
+    community_id: int
+) -> List[UserDB]:
+    return (
+        db.query(UserDB)
+        .join(UserDB.subscribes)
+        .filter(CommunityDB.id == community_id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
 def delete_follower(
     db: Session,

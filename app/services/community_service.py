@@ -14,8 +14,12 @@ from app.core.log_context import set_user_context
 
 
 
-def get_all_communities(db: Session) -> List[Community]:
-    communities = community_crud.get_all_communities(db)
+def get_all_communities(
+        db: Session,
+        limit: int,
+        offset: int
+) -> List[Community]:
+    communities = community_crud.get_all_communities(db, limit, offset)
     logger.info(
         "communities_fetched_from_db",
         total_count=len(communities)
@@ -195,10 +199,11 @@ def delete_community(
 
 def get_followers(
     db: Session,
+    limit: int,
+    offset: int,
     community_id: int
 ) -> List[User]:
-    community = community_crud.get_community_by_id(db, community_id)
-    if not community:
+    if not community_crud.get_community_by_id(db, community_id):
         logger.warning(
             "community_fetch_followers_failed",
             community_id=community_id,
@@ -210,7 +215,7 @@ def get_followers(
         )
 
     logger.info("community_followerd_fetched_from_db", community_id=community_id)
-    return [User.from_orm(user) for user in community.followers]
+    return [User.from_orm(user) for user in community_crud.get_all_followers(db, limit, offset, community_id)]
 
 
 def add_follower(

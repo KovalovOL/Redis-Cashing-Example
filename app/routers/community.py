@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -13,9 +13,11 @@ router = APIRouter()
 
 @router.get("/", response_model=List[Community])
 async def get_all_communities_handler(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    limit: int = Query(5, ge=0, le=100),
+    offset: int = Query(0, ge=0)
 ) -> List[Community]:
-    return community_service.get_all_communities(db)
+    return community_service.get_all_communities(db, limit, offset)
 
 
 @router.get("/{community_id}", response_model=Community)
@@ -31,9 +33,11 @@ async def get_community_by_name_handler(
 @router.get("/{community_id}/followers", response_model=List[User])
 async def get_community_followers(
     community_id: int = Path(..., ge=0),
+    limit: int = Query(5, ge=0, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ) -> List[User]:
-    return community_service.get_followers(db, community_id)
+    return community_service.get_followers(db, limit, offset, community_id)
 
 
 @router.post("/{community_id}/followers", response_model=List[User])
