@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -13,9 +13,11 @@ router = APIRouter()
 
 @router.get("/", response_model=List[User])
 async def get_all_users_handler(
+    limit: int = Query(5, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ) -> List[User]:
-    return user_service.get_all_users(db)
+    return user_service.get_all_users(db, limit, offset)
 
 
 @router.get("/me", response_model=User)
@@ -33,19 +35,28 @@ async def get_user_by_username_handler(
     return user_service.get_user_by_username(db, username)
 
 
+
+
 @router.get("/me/subscribes", response_model=List[Community])
 async def get_current_user_subscribes(
+    limit: int = Query(5, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> List[Community]:
-    return user_service.get_current_user_subscribes(db, current_user)
+    return user_service.get_current_user_subscribes(db, limit, offset, current_user)
+
 
 @router.get("/{user_id}/subscribes", response_model=List[Community])
 async def get_user_subscribes(
+    limit: int = Query(5, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     user_id: int = Path(..., ge=0),
     db: Session = Depends(get_db)
 ) -> List[Community]:
-    return user_service.get_user_subscribes(db, user_id)
+    return user_service.get_user_subscribes(db, limit, offset, user_id)
+
+
 
 
 @router.post("/", response_model=User)

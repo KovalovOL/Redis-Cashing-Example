@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.crud import user as user_crud
-from app.db.models import User as UserDB
+from app.db.models import (User as UserDB,
+                           Community as CommunityDB)
 from app.schemas.user import *
 from app.schemas.community import Community
 from app.core.security import hash_password
@@ -12,8 +13,12 @@ from app.core.log_context import set_user_context
 
 
 
-def get_all_users(db: Session) -> List[User]:
-    users = user_crud.get_all_users(db)
+def get_all_users(
+        db: Session,
+        limit: int,
+        offset: int,
+) -> List[User]:
+    users = user_crud.get_all_users(db, limit, offset)
     logger.info(
         "users_fetched_from_db",
         total_count=len(users)
@@ -42,13 +47,15 @@ def get_user_by_username(
     return User.from_orm(user)
 
 
+
+
 def get_user_subscribes(
     db: Session,
+    limit: int,
+    offset: int,
     user_id: int
 ) -> List[Community]:
-    
-    user = user_crud.get_user_by_id(db, user_id)
-    if not user:
+    if not user_crud.get_user_by_id(db, user_id):
         logger.warning(
             "user_subscribes_fetch_faild",
             target_user_id=user_id,
@@ -60,19 +67,21 @@ def get_user_subscribes(
         )
 
     logger.info("user_subscribes_fetched_from_db")
-    return [Community.from_orm(community) for community in user.subscribes]
+    return [Community.from_orm(c) for c in user_crud.get_all_subsribes(db, limit, offset, user_id)]
 
 
 def get_current_user_subscribes(
     db: Session,
+    limit: int,
+    offset: int,
     current_user: User
-) -> List[User]:
+) -> List[Community]:
     set_user_context(current_user)
     
-    user = user_crud.get_user_by_id(db, current_user.id)
-
     logger.info("user_subscribes_fetched_from_db")
-    return [Community.from_orm(community) for community in user.subscribes]
+    return [Community.from_orm(c) for c in user_crud.get_all_subsribes(db, limit, offset, current_user.id)]
+
+    
 
 
 
