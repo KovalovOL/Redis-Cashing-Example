@@ -1,8 +1,12 @@
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.db.models import Community as CommunityDB
+from app.db.models import (
+    Community as CommunityDB,
+    User as UserDB
+)
 from app.schemas.community import CommunityCreate, CommunityFilter, CommunityUpdate
+
 
 
 def get_all_communities(db: Session) -> List[CommunityDB]:
@@ -48,6 +52,27 @@ def delete_community(db: Session, community: CommunityDB) -> CommunityDB:
     db.delete(community)
     db.commit()
     return community
+
+
+def add_follower(
+    db: Session,
+    follower: UserDB,
+    community: CommunityDB
+):
+    community.followers.append(follower)
+    db.commit()
+    return community
+
+
+def delete_follower(
+    db: Session,
+    follower: UserDB,
+    community: CommunityDB        
+):
+    community.followers.remove(follower)
+    db.commit()
+    return community
+
 
 def is_community_exist_by_name(db: Session, name: str):
     return get_community_by_name(db, name) is not None

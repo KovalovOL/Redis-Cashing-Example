@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.crud import community as community_crud
+from app.crud import user as user_crud
 from app.db.models import Community as CommunityDB
 from app.schemas.community import *
 from app.schemas.user import User
@@ -190,3 +191,101 @@ def delete_community(
         logger.debug("community_cache_deleted", community_id=community_id)
 
     return {"message": f"Community {community.community_name} has been deleted"} 
+
+
+def get_followers(
+    db: Session,
+    community_id: int
+) -> List[User]:
+    community = community_crud.get_community_by_id(db, community_id)
+    if not community:
+        logger.warning(
+            "community_fetch_followers_failed",
+            community_id=community_id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Community not found"
+        )
+
+    logger.info("community_followerd_fetched_from_db", community_id=community_id)
+    return [User.from_orm(user) for user in community.followers]
+
+
+def add_follower(
+    db: Session,
+    community_id: int,
+    current_user: User
+) -> List[User]:
+    set_user_context(current_user)
+
+    community = community_crud.get_community_by_id(db, community_id)
+    if not community:
+        logger.warning(
+            "community_add_follower_failed",
+            community_id=community_id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Community not found"
+        )
+    
+    
+    follower=user_crud.get_user_by_id(db, current_user.id)
+    if follower in community.followers:
+        logger.warning(
+            "community_add_follower_failed",
+            community_id=community_id,
+            follower_id=current_user.id,
+            reason="follower_is_exist"
+        )
+        raise HTTPException(
+            status_code=409,
+            detail="Follower already exist"
+        )
+
+    updated_community = community_crud.add_follower(db, follower, community)
+
+    logger.info("community_added_follower", community_id=community_id)
+    return [User.from_orm(user) for user in updated_community.followers]
+
+
+def delete_follower(
+    db: Session,
+    community_id: int,
+    current_user: User
+) -> dict:
+    set_user_context(current_user)
+
+    community = community_crud.get_community_by_id(db, community_id)
+    if not community:
+        logger.warning(
+            "community_add_follower_failed",
+            community_id=community_id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Community not found"
+        )
+
+    follower = user_crud.get_user_by_id(db, current_user.id)
+    if not follower in community.followers:
+        logger.warning(
+            "community_follower_delete_failed",
+            community_id=community_id,
+            follower_id=current_user.id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="User does not sunscribed"
+        )
+    
+    updated_community = community_crud.delete_follower(db, follower, community)
+    logger.info("community_follower_deleted", community_id=community_id)
+
+    return {"message": f"follower {follower.username} has been deleted"}
+    

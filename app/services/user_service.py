@@ -5,6 +5,7 @@ from typing import List
 from app.crud import user as user_crud
 from app.db.models import User as UserDB
 from app.schemas.user import *
+from app.schemas.community import Community
 from app.core.security import hash_password
 from app.core.logging_config import logger
 from app.core.log_context import set_user_context 
@@ -39,6 +40,40 @@ def get_user_by_username(
         target_user_id=user.id
     )
     return User.from_orm(user)
+
+
+def get_user_subscribes(
+    db: Session,
+    user_id: int
+) -> List[Community]:
+    
+    user = user_crud.get_user_by_id(db, user_id)
+    if not user:
+        logger.warning(
+            "user_subscribes_fetch_faild",
+            target_user_id=user_id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    logger.info("user_subscribes_fetched_from_db")
+    return [Community.from_orm(community) for community in user.subscribes]
+
+
+def get_current_user_subscribes(
+    db: Session,
+    current_user: User
+) -> List[User]:
+    set_user_context(current_user)
+    
+    user = user_crud.get_user_by_id(db, current_user.id)
+
+    logger.info("user_subscribes_fetched_from_db")
+    return [Community.from_orm(community) for community in user.subscribes]
+
 
 
 def create_user(
@@ -104,7 +139,7 @@ def update_user(
             detail="You do not have permissions to update other users"
         )
     
-    user = user_crud.get_by_id(db, user_id)
+    user = user_crud.get_user_by_id(db, user_id)
     if not user:
         logger.warning(
             "user_update_failed",
@@ -159,7 +194,7 @@ def delete_user(
 ) -> dict:
     set_user_context(current_user)
 
-    user = user_crud.get_by_id(db, user_id)
+    user = user_crud.get_user_by_id(db, user_id)
     if not user:
         logger.warning(
             "user_delete_failed",

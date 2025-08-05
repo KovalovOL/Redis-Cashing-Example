@@ -8,7 +8,7 @@ from app.schemas.user import UserCreate, UserFilter, UserUpdate
 def get_all_users(db: Session) -> List[UserDB]:
     return db.query(UserDB).all()
 
-def get_by_id(db: Session, user_id: int) -> UserDB:
+def get_user_by_id(db: Session, user_id: int) -> UserDB:
     return db.query(UserDB).filter(UserDB.id == user_id).first()
 
 def get_user_by_username(db: Session, username: str) -> UserDB:

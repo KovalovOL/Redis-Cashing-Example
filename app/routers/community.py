@@ -20,11 +20,41 @@ async def get_all_communities_handler(
 
 @router.get("/{community_id}", response_model=Community)
 async def get_community_by_name_handler(
-    community_id: str = Path(..., max_length=50),
+    community_id: str = Path(..., ge=0),
     db: Session = Depends(get_db)
 ) -> Community:
     return community_service.get_community_by_id(db, community_id)
-    
+
+
+
+
+@router.get("/{community_id}/followers", response_model=List[User])
+async def get_community_followers(
+    community_id: int = Path(..., ge=0),
+    db: Session = Depends(get_db)
+) -> List[User]:
+    return community_service.get_followers(db, community_id)
+
+
+@router.post("/{community_id}/followers", response_model=List[User])
+async def add_community_follower(
+    community_id: int = Path(..., ge=0),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> List[User]:
+    return community_service.add_follower(db, community_id, current_user)
+
+
+@router.delete("/{community_id}/followers", response_model=dict)
+async def delete_community_follower(
+    community_id: int = Path(..., ge=0),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)   
+) -> dict:
+    return community_service.delete_follower(db, community_id, current_user)
+
+
+
 
 @router.post("/", response_model=Community)
 async def create_community(

@@ -5,6 +5,7 @@ from typing import List
 from app.services import user_service
 from app.core.dependencies import get_db, get_current_user
 from app.schemas.user import *
+from app.schemas.community import Community
 
 
 router = APIRouter()
@@ -30,6 +31,21 @@ async def get_user_by_username_handler(
     db: Session = Depends(get_db)
 ) -> User:
     return user_service.get_user_by_username(db, username)
+
+
+@router.get("/me/subscribes", response_model=List[Community])
+async def get_current_user_subscribes(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> List[Community]:
+    return user_service.get_current_user_subscribes(db, current_user)
+
+@router.get("/{user_id}/subscribes", response_model=List[Community])
+async def get_user_subscribes(
+    user_id: int = Path(..., ge=0),
+    db: Session = Depends(get_db)
+) -> List[Community]:
+    return user_service.get_user_subscribes(db, user_id)
 
 
 @router.post("/", response_model=User)
