@@ -3,7 +3,8 @@ from typing import List
 
 from app.db.models import (
     Community as CommunityDB,
-    User as UserDB
+    User as UserDB,
+    Post as PostDB
 )
 from app.schemas.community import CommunityCreate, CommunityFilter, CommunityUpdate
 
@@ -92,6 +93,21 @@ def delete_follower(
     community.followers.remove(follower)
     db.commit()
     return community
+
+
+def get_community_posts(
+    db: Session,
+    community_id: int,
+    limit: int,
+    offset: int
+) -> List[PostDB]:
+    return (
+        db.query(PostDB)
+        .filter(PostDB.community_id == community_id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
 
 def is_community_exist_by_name(db: Session, name: str):

@@ -5,6 +5,7 @@ from typing import List
 from app.core.dependencies import get_db, get_current_user
 from app.schemas.community import *
 from app.schemas.user import User
+from app.schemas.post import Post
 from app.services import community_service
 
 
@@ -57,6 +58,16 @@ async def delete_community_follower(
 ) -> dict:
     return community_service.delete_follower(db, community_id, current_user)
 
+
+
+@router.get("/{community_id}/posts")
+def get_community_posts(
+    community_id: int = Path(..., gl=0),
+    limit: int = Query(5, gl=0, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db)
+) -> List[Post]:
+    return community_service.get_posts(db, community_id, limit, offset)
 
 
 

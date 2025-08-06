@@ -7,8 +7,9 @@ from app.crud import user as user_crud
 from app.db.models import Community as CommunityDB
 from app.schemas.community import *
 from app.schemas.user import User
+from app.schemas.post import Post
 from app.cache.utils import *
-from app.cache.keys import *
+from app.cache.keys import community_cache_key
 from app.core.logging_config import logger
 from app.core.log_context import set_user_context
 
@@ -83,6 +84,9 @@ def create_community(
 
     community_crud.create_community(db, new_community)
     logger.info("community_created", community_id=new_community.id)
+
+    set_cache(community_cache_key(new_community.id), serialize_community(new_community), ttl=120)
+    logger.debug("community_cached", community_id=new_community.id)
 
     return Community.from_orm(new_community)
 
@@ -190,9 +194,8 @@ def delete_community(
     community_crud.delete_community(db, community)
     logger.info("community_deleted", community_id=community_id)
 
-    if get_cache(community_cache_key(community_id)):
-        delete_cache(community_cache_key(community_id))
-        logger.debug("community_cache_deleted", community_id=community_id)
+    delete_cache(community_cache_key(community_id))
+    logger.debug("community_cache_deleted", community_id=community_id)
 
     return {"message": f"Community {community.community_name} has been deleted"} 
 
@@ -293,4 +296,28 @@ def delete_follower(
     logger.info("community_follower_deleted", community_id=community_id)
 
     return {"message": f"follower {follower.username} has been deleted"}
+
+
+def get_posts(
+    db: Session,
+    community_id: int,
+    limit: int,
+    offset: int
+) -> List[Post]:
     
+    community = community_crud.get_community_by_id(db, community_id)
+    if not community:
+        logger.warning(
+            "community_add_follower_failed",
+            community_id=community_id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="Community not found"
+        )
+    
+    posts = community_crud.get_community_posts(db, community_id, limit, offset)
+    logger.info("community_posts_fetched_from_db", community_id=community_id, total_count=len(posts))
+
+    return [Post.from_orm(p) for p in posts]
