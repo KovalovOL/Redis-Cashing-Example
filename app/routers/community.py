@@ -23,7 +23,7 @@ async def get_all_communities_handler(
 
 @router.get("/{community_id}", response_model=Community)
 async def get_community_by_name_handler(
-    community_id: str = Path(..., ge=0),
+    community_id: int = Path(..., ge=0),
     db: Session = Depends(get_db)
 ) -> Community:
     return community_service.get_community_by_id(db, community_id)

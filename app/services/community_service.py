@@ -28,6 +28,7 @@ def get_all_communities(
     return [Community.from_orm(community) for community in communities]
 
 
+
 def get_community_by_id(
     db: Session,
     community_id: int
@@ -75,20 +76,20 @@ def create_community(
             detail=f"Community {community.community_name} has already existed"
         )
     
-    new_community = CommunityDB(
+    new_community = CommunityCreate(
         community_name=community.community_name,
         description=community.description,
         photo_url=community.photo_url,
         owner_id=current_user.id
     )
 
-    community_crud.create_community(db, new_community)
-    logger.info("community_created", community_id=new_community.id)
+    community_data = community_crud.create_community(db, new_community)
+    logger.info("community_created", community_id=community_data.id)
 
-    set_cache(community_cache_key(new_community.id), serialize_community(new_community), ttl=120)
-    logger.debug("community_cached", community_id=new_community.id)
+    set_cache(community_cache_key(community_data.id), serialize_community(community_data), ttl=120)
+    logger.debug("community_cached", community_id=community_data.id)
 
-    return Community.from_orm(new_community)
+    return Community.from_orm(community_data)
 
 
 def update_community(

@@ -40,11 +40,18 @@ def get_community_by_conditions(db: Session, filters: CommunityFilter) -> List[C
     return db.query(CommunityDB).filter(*conditions).all()
 
 
-def create_community(db: Session, community: CommunityDB) -> CommunityDB:
-    db.add(community)
+def create_community(db: Session, community: CommunityCreate) -> CommunityDB:
+    new_community = CommunityDB(
+        community_name=community.community_name,
+        description=community.description,
+        photo_url=community.photo_url,
+        owner_id=community.owner_id
+    )
+
+    db.add(new_community)
     db.commit()
-    db.refresh(community)
-    return community
+    db.refresh(new_community)
+    return new_community
 
 
 def update_community(db: Session, community: CommunityDB) -> CommunityDB:
