@@ -22,6 +22,17 @@ def register_user(
             detail="This username already exist"
         )
     
+    if user.role == "admin":
+        logger.warning(
+            "user_register_failed",
+            target_user_role=user.role,
+            reason="invalid_value"
+        )
+        raise HTTPException(
+            status_code=401,
+            detail="User create_user handler if you want to create admin user"
+        )
+
     user_data = UserCreate(
         username=user.username,
         password=hash_password(user.password),
@@ -29,8 +40,9 @@ def register_user(
         role="user"
     )
 
-    logger.info("user_registered", target_user_id=user_data.id)
     created_user = user_crud.create_user(db, user_data)
+    logger.info("user_registered", target_user_id=created_user.id)
+
     return User.from_orm(created_user)
 
 

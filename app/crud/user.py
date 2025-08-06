@@ -52,11 +52,17 @@ def get_all_subsribes(
 
 
 
-def create_user(db: Session, user: UserDB) -> UserDB:
-    db.add(user)
+def create_user(db: Session, user: UserCreate) -> UserDB:
+    new_user = UserDB(
+        username=user.username,
+        hashed_password=user.password,
+        avatar_url=user.avatar_url,
+    )
+
+    db.add(new_user)
     db.commit()
-    db.refresh(user)
-    return user
+    db.refresh(new_user)
+    return new_user
 
 
 def update_user(db: Session, user: UserDB) -> UserDB:

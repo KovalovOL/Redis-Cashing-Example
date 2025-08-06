@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.crud import user as user_crud
-from app.db.models import (User as UserDB,
-                           Community as CommunityDB)
+from app.db.models import User as UserDB
 from app.schemas.user import *
 from app.schemas.community import Community
 from app.core.security import hash_password
@@ -113,19 +112,15 @@ def create_user(
             status_code=403,
             detail="You do not have permissions to create admin user"
         )
+    
+    user_data = user.copy(update={"password": hash_password(user.password)})
 
-    new_user = UserDB(
-        username=user.username,
-        hashed_password=hash_password(user.password),
-        avatar_url=user.avatar_url,
-        role=user.role
-    )
-
-    user_crud.create_user(db, new_user)
+    new_user = user_crud.create_user(db, user_data)
     logger.info(
         "user_created",
         target_user_id=new_user.id
     )
+
     return User.from_orm(new_user)
 
 
