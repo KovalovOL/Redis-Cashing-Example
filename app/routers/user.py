@@ -45,6 +45,16 @@ async def get_user_subscribes(
     return user_service.get_user_subscribes(db, user_id, limit, offset)
 
 
+@router.get("/{user_id}/communities", response_model=List[Community])
+async def get_user_communities(
+    limit: int = Query(5, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    user_id: int = Path(..., ge=0),
+    db: Session = Depends(get_db)
+) -> List[Community]:
+    return user_service.get_user_communities(db, user_id, limit, offset)
+
+
 @router.get("/{user_id}/posts")
 async def get_user_posts(
     user_id: int = Path(..., gt=0),

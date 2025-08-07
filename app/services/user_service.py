@@ -65,10 +65,34 @@ def get_user_subscribes(
             detail="User not found"
         )
 
-    subscribes = user_crud.get_all_subsribes(db, limit, offset, user_id)
-    logger.info("user_subscribes_fetched_from_db")
+    subscribes = user_crud.get_user_subsribes(db, limit, offset, user_id)
+    logger.info("user_subscribes_fetched_from_db", target_user_id=user_id, total_count=len(subscribes))
 
     return [Community.from_orm(c) for c in subscribes]
+
+
+def get_user_communities(
+    db: Session,
+    user_id: int,
+    limit: int,
+    offset: int
+) -> List[Community]:
+    if not user_crud.get_user_by_id(db, user_id):
+        logger.warning(
+            "user_communities_fetch_faild",
+            target_user_id=user_id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    
+    communites = user_crud.get_user_communities(db, user_id, limit, offset)
+    logger.info("user_communities_fetched", target_user_id=user_id, total_count=len(communites))
+
+    return [Community.from_orm(c) for c in communites]
+
 
 
 def get_user_pots(
@@ -89,9 +113,12 @@ def get_user_pots(
         )
 
     posts = user_crud.get_user_posts(db, user_id, limit, offset)
-    logger.info("user_posts_fetched_from_db")
+    logger.info("user_posts_fetched_from_db", target_user_id = user_id, total_count=len(posts))
 
     return [Post.from_orm(p) for p in posts]
+
+
+
 
     
 

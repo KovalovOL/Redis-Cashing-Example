@@ -7,7 +7,6 @@ from app.db.models import (User as UserDB,
                            )
 
 from app.schemas.user import UserCreate, UserFilter
-from app.schemas.post import Post
 
 
 def get_all_users(
@@ -38,21 +37,6 @@ def get_user_by_conditions(db: Session, filters: UserFilter) -> List[UserDB]:
 
     return db.query(UserDB).filter(*conditions).all()
 
-
-def get_all_subsribes(
-    db: Session,
-    limit: int,
-    offset: int,
-    user_id: int
-) -> List[CommunityDB]:
-    return (
-        db.query(CommunityDB)
-        .join(CommunityDB.followers)
-        .filter(UserDB.id == user_id)
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
 
 
 
@@ -88,6 +72,21 @@ def is_user_exist(db: Session, username: str):
         return True
     return False
 
+def get_user_subsribes(
+    db: Session,
+    limit: int,
+    offset: int,
+    user_id: int
+) -> List[CommunityDB]:
+    return (
+        db.query(CommunityDB)
+        .join(CommunityDB.followers)
+        .filter(UserDB.id == user_id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
 
 def get_user_posts(
     db: Session,
@@ -98,6 +97,21 @@ def get_user_posts(
     return (
         db.query(PostDB)
         .filter(PostDB.owner_id == user_id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+
+def get_user_communities(
+    db: Session,
+    user_id: int,
+    limit: int,
+    offset: int
+) -> List[CommunityDB]:
+    return (
+        db.query(CommunityDB)
+        .filter(CommunityDB.owner_id == user_id)
         .offset(offset)
         .limit(limit)
         .all()
