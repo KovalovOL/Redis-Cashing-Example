@@ -7,7 +7,7 @@ from .log_context import add_contextvars
 logging.basicConfig(
     format="%(message)s",
     stream=sys.stdout,
-    level=logging.INFO
+    level=logging.DEBUG
 )
 
 file_handler = logging.FileHandler("app.log")

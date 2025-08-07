@@ -21,7 +21,7 @@ def register_user(
             status_code=409,
             detail="This username already exist"
         )
-    
+
     if user.role == "admin":
         logger.warning(
             "user_register_failed",
@@ -69,7 +69,7 @@ def login_user(
     token = create_access_token(token_data)
     response.set_cookie("access_token", token, httponly=True)
 
-    logger.info("user_login_success", user_id=user_data.id)
+    logger.info("user_login_success")
     return {
         "username": user_data.username,
         "access_token": token 
