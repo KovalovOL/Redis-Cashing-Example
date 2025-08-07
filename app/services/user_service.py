@@ -25,16 +25,16 @@ def get_all_users(
     return [User.from_orm(user) for user in users]
 
 
-def get_user_by_username(
+def get_user_by_id(
         db: Session,
-        username: str
+        id: int
 ) -> User:
-    user = user_crud.get_user_by_username(db, username)
+    user = user_crud.get_user_by_id(db, id)
 
     if not user:
         logger.warning(
             "user_fetch_failed",
-            target_user_id=username,
+            target_user_id=id,
             reason="not_found"
         ) 
         raise HTTPException(status_code=404, detail="User not found")

@@ -27,17 +27,17 @@ async def get_logged_in_user_handler(
     return current_user
 
 
-@router.get("/{username}", response_model=User)
-async def get_user_by_username_handler(
-    username: str = Path(..., max_length=50),
+@router.get("/{user_id}", response_model=User)
+async def get_user_by_id_handler(
+    user_id: str = Path(..., max_length=50),
     db: Session = Depends(get_db)
 ) -> User:
-    return user_service.get_user_by_username(db, username)
+    return user_service.get_user_by_id(db, user_id)
 
 
 
 
-@router.get("/me/subscribes", response_model=List[Community])
+@router.get("/me/subscriptions", response_model=List[Community])
 async def get_current_user_subscribes(
     limit: int = Query(5, ge=1, le=100),
     offset: int = Query(0, ge=0),
