@@ -5,6 +5,7 @@ from datetime import datetime
 
 class CommentBase(BaseModel):
     text: str = Field(max_length=500)
+    post_id: int = Field(gt=0)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -21,7 +22,6 @@ class CommentCreate(CommentBase):
 class Comment(CommentBase):
     id: int = Field(gt=0)
     owner_id: int = Field(gt=0)
-    post_id: int = Field(gt=0)
     time_edited: datetime
     is_edited: bool
 

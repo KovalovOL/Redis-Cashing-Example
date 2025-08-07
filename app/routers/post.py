@@ -2,9 +2,10 @@ from fastapi import APIRouter, Path, Query, Depends
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from app.services import post_service
+from app.services import post_service, comment_service
 from app.core.dependencies import get_db, get_current_user
 from app.schemas.user import User
+from app.schemas.comment import Comment
 from app.schemas.post import *
 
 
@@ -29,6 +30,16 @@ async def get_post_by_id(
     db: Session = Depends(get_db)
 ) -> Post:
     return post_service.get_post_by_id(db, post_id)
+
+
+@router.get("/{post_id}/comments", response_model=List[Comment])
+async def get_comments(
+    post_id: int = Path(..., gt=0),
+    limit: int = Query(5, gt=0, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db)
+) -> List[Comment]:
+    return comment_service.get_comments_by_post(db, post_id, limit, offset)
 
 
 @router.post("/")

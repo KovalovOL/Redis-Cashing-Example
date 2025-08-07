@@ -19,17 +19,16 @@ async def get_all_comments_by_post(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ) -> List[Comment]:
-    return comment_service.get_comment_by_post(db, post_id, limit, offset)
+    return comment_service.get_comments_by_post(db, post_id, limit, offset)
 
 
-@router.post("/{post_id}", response_model=Comment)
+@router.post("/", response_model=Comment)
 async def create_comment(
     comment: CommentCreateInput,
-    post_id: int = Path(..., gt=0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> Comment:
-    return comment_service.create_comment(db, comment, post_id, current_user)
+    return comment_service.create_comment(db, comment, current_user)
 
 
 @router.put("/{comment_id}", response_model=Comment)

@@ -51,7 +51,7 @@ def get_post_by_id(
     set_cache(post_key, serialize_post(post), ttl=120)
     logger.debug("post_cached", post_id=post_id)
 
-    logger.into("post_fetched_from_db", post_id=post_id)
+    logger.info("post_fetched_from_db", post_id=post_id)
     return Post.from_orm(post)
 
 

@@ -11,7 +11,7 @@ from app.core.log_context import set_user_context
 from app.core.logging_config import logger
 
 
-def get_comment_by_post(
+def get_comments_by_post(
     db: Session,
     post_id: int,
     limit: int,
@@ -38,15 +38,14 @@ def get_comment_by_post(
 def create_comment(
     db: Session,
     comment: CommentCreateInput,
-    post_id: int,
     current_user: User
 ) -> Comment:
     set_user_context(current_user)
 
-    if not get_post_by_id(db, post_id):
+    if not get_post_by_id(db, comment.post_id):
         logger.warning(
             "comments_fetch_failed",
-            post_id=post_id,
+            post_id=comment.post_id,
             reason="not_found"
         )
         raise HTTPException(
@@ -56,7 +55,7 @@ def create_comment(
 
     new_comment = CommentCreate(
         text=comment.text,
-        post_id=post_id,
+        post_id=comment.post_id,
         owner_id=current_user.id
     )
 
