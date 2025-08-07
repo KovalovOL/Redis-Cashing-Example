@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.crud import user as user_crud
-from app.db.models import User as UserDB
 from app.schemas.user import *
 from app.schemas.community import Community
+from app.schemas.post import Post
 from app.core.security import hash_password
 from app.core.logging_config import logger
 from app.core.log_context import set_user_context 
@@ -50,9 +50,9 @@ def get_user_by_id(
 
 def get_user_subscribes(
     db: Session,
+    user_id: int,
     limit: int,
-    offset: int,
-    user_id: int
+    offset: int
 ) -> List[Community]:
     if not user_crud.get_user_by_id(db, user_id):
         logger.warning(
@@ -65,20 +65,33 @@ def get_user_subscribes(
             detail="User not found"
         )
 
+    subscribes = user_crud.get_all_subsribes(db, limit, offset, user_id)
     logger.info("user_subscribes_fetched_from_db")
-    return [Community.from_orm(c) for c in user_crud.get_all_subsribes(db, limit, offset, user_id)]
+
+    return [Community.from_orm(c) for c in subscribes]
 
 
-def get_current_user_subscribes(
+def get_user_pots(
     db: Session,
+    user_id: int,
     limit: int,
-    offset: int,
-    current_user: User
-) -> List[Community]:
-    set_user_context(current_user)
-    
-    logger.info("user_subscribes_fetched_from_db")
-    return [Community.from_orm(c) for c in user_crud.get_all_subsribes(db, limit, offset, current_user.id)]
+    offset: int
+) -> List[Post]:
+    if not user_crud.get_user_by_id(db, user_id):
+        logger.warning(
+            "user_posts_fetch_faild",
+            target_user_id=user_id,
+            reason="not_found"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    posts = user_crud.get_user_posts(db, user_id, limit, offset)
+    logger.info("user_posts_fetched_from_db")
+
+    return [Post.from_orm(p) for p in posts]
 
     
 

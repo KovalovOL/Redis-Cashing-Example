@@ -2,8 +2,12 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.models import (User as UserDB,
-                           Community as CommunityDB)
-from app.schemas.user import UserCreate, UserFilter, UserUpdate
+                           Community as CommunityDB,
+                           Post as PostDB
+                           )
+
+from app.schemas.user import UserCreate, UserFilter
+from app.schemas.post import Post
 
 
 def get_all_users(
@@ -83,3 +87,18 @@ def is_user_exist(db: Session, username: str):
     if user:
         return True
     return False
+
+
+def get_user_posts(
+    db: Session,
+    user_id: int,
+    limit: int,
+    offset: int
+) -> List[PostDB]:
+    return (
+        db.query(PostDB)
+        .filter(PostDB.owner_id == user_id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
