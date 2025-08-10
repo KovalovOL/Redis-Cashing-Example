@@ -1,0 +1,12 @@
+uvicorn
+fastapi
+
+SQLAlchemy
+psycopg2
+
+python-dotenv
+python-jose
+passlib[bcrypt]
+
+structlog
+redis

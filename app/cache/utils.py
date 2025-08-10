@@ -1,5 +1,3 @@
-import json
-
 from .redis_client import redis_client
 from app.db.models import (Community as CommunityDB,
                            Post as PostDB
