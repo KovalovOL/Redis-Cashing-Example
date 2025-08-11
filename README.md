@@ -1,6 +1,6 @@
 # Mini Social Network – Users, Communities, Posts, Comments
 
-### This project is already hosted in aws with RDS and EC2
+### This project is already hosted on aws with RDS and EC2
 
 **Link to server:** http://56.228.23.236:8000/docs  
 
