@@ -1,11 +1,24 @@
 # Mini Social Network – Users, Communities, Posts, Comments
 
+### This project is already hosted in aws with RDS and EC2
+
+**Link to server:** http://56.228.23.236:8000/docs  
+
+*Yes, I know it uses HTTP instead of HTTPS — but I don't know how to use NGINX to create the HTTPS connection.*
+
+![AWS Schema](docs/aws_Example.png)
+*Schema of aws modules*
+
+
+## Application architecture
+
 A minimal social networking backend similar to Reddit.  
 Includes:
 
 - **Relational database** with 4 tables and many-to-many relationships
 - **Caching** using Redis
 - **Structured logging** with contextual information via middleware
+
 
 ![Architecture Schema](docs/simple_arc_Example.png)  
 *Schema of application modules*
